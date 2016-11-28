@@ -16,10 +16,15 @@ public class AppTest {
         app = new App();
     }
 
+    
     @Test
     public void testReadPOMFile() throws Exception {
 
         app.readPOMfile("src/test/resources/sample_pom.xml");
     }
+    
+   
+    
+    
 
 }
