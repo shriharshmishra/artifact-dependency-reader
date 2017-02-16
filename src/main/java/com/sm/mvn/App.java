@@ -10,6 +10,8 @@ import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Values;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -19,6 +21,8 @@ import java.io.IOException;
  *
  */
 public class App {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     public void readPOMfile(String fileName) throws IOException, XmlPullParserException {
 
@@ -45,17 +49,20 @@ public class App {
     }
 
     public void buildMavenDependencyGraph(Model model) {
-        String createDependencyQuery = "merge (a1:Artifact { artifactId : {artifactId1}, groupId: {groupId1} }) "
-        		+ " merge (a2:Artifact { artifactId : {artifactId2}, groupId: {groupId2} }) "
+        String createDependencyQuery = "merge (a1:Artifact { artifactId : {artifactId1}, groupId: {groupId1}, version: {version1}}) "
+        		+ " merge (a2:Artifact { artifactId : {artifactId2}, groupId: {groupId2}, version:{version2} }) "
         		+ " merge (a1) -[:DEPENDS_ON] -> (a2)"; 
         
         try (Session session = getNeo4JSession()) {
         	
             for (Dependency d : model.getDependencies()) {
+            	LOGGER.info("Adding dependency to - [{}, {}] ",d.getArtifactId(), d.getGroupId() );
                 session.run(createDependencyQuery, Values.parameters(
                 		"artifactId1", model.getArtifactId(), 
                 		"groupId1", model.getGroupId(), 
+                		"version1", model.getVersion(),
                 		"artifactId2", d.getArtifactId(), 
+                		"version2", d.getVersion(),
                 		"groupId2", d.getGroupId())).consume();
             }
             
@@ -78,9 +85,15 @@ public class App {
     
     public static void main( String[] args ) throws Exception {
 
-        System.out.println("Hello World!");
-        App app = new App();
-        
-        app.loadMavenDependencyFromPom("src/main/resources/sample_pom.xml");
+    	try {
+			System.out.println("Hello World!");
+			App app = new App();
+			
+			app.loadMavenDependencyFromPom("src/main/resources/sample_pom.xml");
+
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    	
     }
 }
